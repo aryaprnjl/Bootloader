@@ -122,9 +122,6 @@ def Serial_Port_Configuration(port):
         return -1
     if ser.is_open:
         print("\n   Port Open Success")
-        while True:
-            ver=read_serial_port(1)
-            print(ver)
     else:
         print("\n   Port Open Failed")
     return 0
@@ -721,3 +718,5 @@ def check_flash_status():
 
 def protection_type():
     pass
+
+

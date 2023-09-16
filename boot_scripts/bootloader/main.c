@@ -42,6 +42,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+CRC_HandleTypeDef hcrc;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
@@ -67,6 +69,7 @@ uint8_t supported_commands[] = {
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_CRC_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
@@ -85,8 +88,7 @@ static void MX_USART1_UART_Init(void);
 	va_list args;
 	va_start(args, format);
 	vsprintf(str, format,args);
-	while(1){
-	HAL_UART_Transmit(BOOTLOADER_LOG_UART,(uint8_t *)str, strlen(str),HAL_MAX_DELAY);}
+	HAL_UART_Transmit(BOOTLOADER_CMD_UART,(uint8_t *)str, strlen(str),HAL_MAX_DELAY);
 	va_end(args);
 #endif
  }
@@ -100,9 +102,9 @@ void  bootloader_uart_read_data(void)
 		memset(bl_rx_buffer,0,200);
 		//here we will read and decode the commands coming from host
 		//first read only one byte from the host , which is the "length" field of the command packet
-    HAL_UART_Receive(BOOTLOADER_CMD_UART,bl_rx_buffer,1,HAL_MAX_DELAY);
+		HAL_UART_Receive(BOOTLOADER_LOG_UART,bl_rx_buffer,1,HAL_MAX_DELAY);
 		rcv_len= bl_rx_buffer[0];
-		HAL_UART_Receive(BOOTLOADER_CMD_UART,&bl_rx_buffer[1],rcv_len,HAL_MAX_DELAY);
+		HAL_UART_Receive(BOOTLOADER_LOG_UART,&bl_rx_buffer[1],rcv_len,HAL_MAX_DELAY);
 		switch(bl_rx_buffer[1])
 		{
             case BL_GET_VER:
@@ -186,26 +188,27 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_CRC_Init();
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
   /* Check whether button is pressed or not, if not pressed jump to user application */
-  if ( HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_13) == GPIO_PIN_RESET )
-  {
-    printmsg("BL_DEBUG_MSG:Button is pressed .. going to BL mode\n\r");
+  //if ( HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_13) == GPIO_PIN_RESET )
+  //{
+  //  printmsg("BL_DEBUG_MSG:Button is pressed .. going to BL mode\n\r");
 
     //we should continue in bootloader mode
     bootloader_uart_read_data();
-  }
-  else
-  {
-    printmsg("BL_DEBUG_MSG:Button is not pressed .. executing user app\n\r");
+  //}
+  //else
+  //{
+  //  printmsg("BL_DEBUG_MSG:Button is not pressed .. executing user app\n\r");
 
     //jump to user application
     //bootloader_jump_to_user_app();
-  }
+  //}
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -301,6 +304,31 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 2 */
 
+}
+
+/* CRC init function */
+static void MX_CRC_Init(void)
+{
+  /* USER CODE BEGIN CRC_Init 0 */
+
+  /* USER CODE END CRC_Init 0 */
+
+  /* USER CODE BEGIN CRC_Init 1 */
+
+  /* USER CODE END CRC_Init 1 */
+  hcrc.Instance = CRC;
+  hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
+  hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_ENABLE;
+  hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_NONE;
+  hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_DISABLE;
+  hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_BYTES;
+  if (HAL_CRC_Init(&hcrc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN CRC_Init 2 */
+
+  /* USER CODE END CRC_Init 2 */
 }
 
 /**
@@ -425,7 +453,7 @@ void bootloader_handle_getver_cmd(uint8_t *bl_rx_buffer)
     uint8_t bl_version;
 
     // 1) verify the checksum
-      printmsg("BL_DEBUG_MSG:bootloader_handle_getver_cmd\n");
+      printmsg("BL_DEBUG_MSG:bootloader_handle_getver_cmd\r\n");
 
 	 //Total length of the command packet
 	  uint32_t command_packet_len = bl_rx_buffer[0]+1 ;
@@ -435,11 +463,11 @@ void bootloader_handle_getver_cmd(uint8_t *bl_rx_buffer)
 
     if (! bootloader_verify_crc(&bl_rx_buffer[0],command_packet_len-4,host_crc))
     {
-        printmsg("BL_DEBUG_MSG:checksum success !!\n");
+        printmsg("BL_DEBUG_MSG:checksum success !!\r\n");
         // checksum is correct..
         bootloader_send_ack(bl_rx_buffer[0],1);
         bl_version=get_bootloader_version();
-        printmsg("BL_DEBUG_MSG:BL_VER : %d %#x\n",bl_version,bl_version);
+        printmsg("BL_DEBUG_MSG:BL_VER : %d %#x\r\n",bl_version,bl_version);
         bootloader_uart_write_data(&bl_version,1);
 
     }else
@@ -805,7 +833,7 @@ void bootloader_send_ack(uint8_t command_code, uint8_t follow_len)
 	uint8_t ack_buf[2];
 	ack_buf[0] = BL_ACK;
 	ack_buf[1] = follow_len;
-	HAL_UART_Transmit(BOOTLOADER_CMD_UART,ack_buf,2,HAL_MAX_DELAY);
+	HAL_UART_Transmit(BOOTLOADER_LOG_UART,ack_buf,2,HAL_MAX_DELAY);
 
 }
 
@@ -819,14 +847,23 @@ void bootloader_send_nack(void)
 //This verifies the CRC of the given buffer in pData .
 uint8_t bootloader_verify_crc (uint8_t *pData, uint32_t len, uint32_t crc_host)
 {
-	return 1;
+    uint32_t retVal = VERIFY_CRC_FAIL;
+	
+	uint32_t crc_result = HAL_CRC_Calculate(&hcrc, (uint32_t*)pData, (uint32_t)len);
+
+	if( crc_result == crc_host)
+	{
+		retVal = VERIFY_CRC_SUCCESS;
+	}
+
+	return retVal;
 }
 
 /* This function writes data in to BOOTLOADER_CMD_UART */
 void bootloader_uart_write_data(uint8_t *pBuffer,uint32_t len)
 {
     /*you can replace the below ST's USART driver API call with your MCUs driver API call */
-	HAL_UART_Transmit(BOOTLOADER_CMD_UART,pBuffer,len,HAL_MAX_DELAY);
+	HAL_UART_Transmit(BOOTLOADER_LOG_UART,pBuffer,len,HAL_MAX_DELAY);
 
 }
 
@@ -1012,3 +1049,5 @@ uint16_t read_OB_rw_protection_status(void)
 {
 	return (uint16_t)1;
 }
+
+
