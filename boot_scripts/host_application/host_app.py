@@ -162,7 +162,6 @@ def process_COMMAND_BL_GET_HELP(length):
     print("\n   Supported Commands :",end=' ')
     for x in reply:
         print(hex(x),end=' ')
-    print()
 
 def process_COMMAND_BL_GET_CID(length):
     value = read_serial_port(length)
