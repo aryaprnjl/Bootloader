@@ -456,13 +456,13 @@ void bootloader_handle_getver_cmd(uint8_t *bl_rx_buffer)
       printmsg("BL_DEBUG_MSG:bootloader_handle_getver_cmd\r\n");
 
 	 //Total length of the command packet
-	  uint32_t command_packet_len = bl_rx_buffer[0]+1 ;
+	  //uint32_t command_packet_len = bl_rx_buffer[0]+1 ;
 
 	  //extract the CRC32 sent by the Host
-	  uint32_t host_crc = *((uint32_t * ) (bl_rx_buffer+command_packet_len - 4) ) ;
+	  //uint32_t host_crc = *((uint32_t * ) (bl_rx_buffer+command_packet_len - 4) ) ;
 
-    if (! bootloader_verify_crc(&bl_rx_buffer[0],command_packet_len-4,host_crc))
-    {
+    //if (! bootloader_verify_crc(&bl_rx_buffer[0],command_packet_len-4,host_crc))
+    //{
         printmsg("BL_DEBUG_MSG:checksum success !!\r\n");
         // checksum is correct..
         bootloader_send_ack(bl_rx_buffer[0],1);
@@ -470,14 +470,12 @@ void bootloader_handle_getver_cmd(uint8_t *bl_rx_buffer)
         printmsg("BL_DEBUG_MSG:BL_VER : %d %#x\r\n",bl_version,bl_version);
         bootloader_uart_write_data(&bl_version,1);
 
-    }else
-    {
-        printmsg("BL_DEBUG_MSG:checksum fail !!\n");
-        //checksum is wrong send nack
-        bootloader_send_nack();
-    }
-
-
+    //}else
+    //{
+    //    printmsg("BL_DEBUG_MSG:checksum fail !!\n");
+    //    //checksum is wrong send nack
+    //    bootloader_send_nack();
+    //}
 }
 
 /*Helper function to handle BL_GET_HELP command
@@ -488,23 +486,22 @@ void bootloader_handle_gethelp_cmd(uint8_t *pBuffer)
     printmsg("BL_DEBUG_MSG:bootloader_handle_gethelp_cmd\n");
 
 	//Total length of the command packet
-	uint32_t command_packet_len = bl_rx_buffer[0]+1 ;
+	//uint32_t command_packet_len = bl_rx_buffer[0]+1 ;
 
 	//extract the CRC32 sent by the Host
-	uint32_t host_crc = *((uint32_t * ) (bl_rx_buffer+command_packet_len - 4) ) ;
+	//uint32_t host_crc = *((uint32_t * ) (bl_rx_buffer+command_packet_len - 4) ) ;
 
-	if (! bootloader_verify_crc(&bl_rx_buffer[0],command_packet_len-4,host_crc))
-	{
+	//if (! bootloader_verify_crc(&bl_rx_buffer[0],command_packet_len-4,host_crc))
+	//{
         printmsg("BL_DEBUG_MSG:checksum success !!\n");
         bootloader_send_ack(pBuffer[0],sizeof(supported_commands));
         bootloader_uart_write_data(supported_commands,sizeof(supported_commands) );
 
-	}else
-	{
-        printmsg("BL_DEBUG_MSG:checksum fail !!\n");
-        bootloader_send_nack();
-	}
-
+	//}else
+	//{
+    //    printmsg("BL_DEBUG_MSG:checksum fail !!\n");
+    //    bootloader_send_nack();
+	//}
 }
 
 /*Helper function to handle BL_GET_CID command */
@@ -514,24 +511,24 @@ void bootloader_handle_getcid_cmd(uint8_t *pBuffer)
 	printmsg("BL_DEBUG_MSG:bootloader_handle_getcid_cmd\n");
 
     //Total length of the command packet
-	uint32_t command_packet_len = bl_rx_buffer[0]+1 ;
+	//uint32_t command_packet_len = bl_rx_buffer[0]+1 ;
 
 	//extract the CRC32 sent by the Host
-	uint32_t host_crc = *((uint32_t * ) (bl_rx_buffer+command_packet_len - 4) ) ;
+	//uint32_t host_crc = *((uint32_t * ) (bl_rx_buffer+command_packet_len - 4) ) ;
 
-	if (! bootloader_verify_crc(&bl_rx_buffer[0],command_packet_len-4,host_crc))
-	{
+	//if (! bootloader_verify_crc(&bl_rx_buffer[0],command_packet_len-4,host_crc))
+	//{
         printmsg("BL_DEBUG_MSG:checksum success !!\n");
         bootloader_send_ack(pBuffer[0],2);
         bl_cid_num = get_mcu_chip_id();
         printmsg("BL_DEBUG_MSG:MCU id : %d %#x !!\n",bl_cid_num, bl_cid_num);
         bootloader_uart_write_data((uint8_t *)&bl_cid_num,2);
 
-	}else
-	{
-        printmsg("BL_DEBUG_MSG:checksum fail !!\n");
-        bootloader_send_nack();
-	}
+	//}else
+	//{
+    //    printmsg("BL_DEBUG_MSG:checksum fail !!\n");
+    //    bootloader_send_nack();
+	//}
 
 
 }
