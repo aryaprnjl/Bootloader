@@ -540,24 +540,24 @@ void bootloader_handle_getrdp_cmd(uint8_t *pBuffer)
     printmsg("BL_DEBUG_MSG:bootloader_handle_getrdp_cmd\n");
 
     //Total length of the command packet
-	uint32_t command_packet_len = bl_rx_buffer[0]+1 ;
+	//uint32_t command_packet_len = bl_rx_buffer[0]+1 ;
 
 	//extract the CRC32 sent by the Host
-	uint32_t host_crc = *((uint32_t * ) (bl_rx_buffer+command_packet_len - 4) ) ;
+	//uint32_t host_crc = *((uint32_t * ) (bl_rx_buffer+command_packet_len - 4) ) ;
 
-	if (! bootloader_verify_crc(&bl_rx_buffer[0],command_packet_len-4,host_crc))
-	{
+	//if (! bootloader_verify_crc(&bl_rx_buffer[0],command_packet_len-4,host_crc))
+	//{
         printmsg("BL_DEBUG_MSG:checksum success !!\n");
         bootloader_send_ack(pBuffer[0],1);
         rdp_level = get_flash_rdp_level();
         printmsg("BL_DEBUG_MSG:RDP level: %d %#x\n",rdp_level,rdp_level);
         bootloader_uart_write_data(&rdp_level,1);
 
-	}else
-	{
-        printmsg("BL_DEBUG_MSG:checksum fail !!\n");
-        bootloader_send_nack();
-	}
+	//}else
+	//{
+    //    printmsg("BL_DEBUG_MSG:checksum fail !!\n");
+    //    bootloader_send_nack();
+	//}
 
 
 }
@@ -838,7 +838,7 @@ void bootloader_send_ack(uint8_t command_code, uint8_t follow_len)
 void bootloader_send_nack(void)
 {
 	uint8_t nack = BL_NACK;
-	HAL_UART_Transmit(BOOTLOADER_CMD_UART,&nack,1,HAL_MAX_DELAY);
+	HAL_UART_Transmit(BOOTLOADER_LOG_UART,&nack,1,HAL_MAX_DELAY);
 }
 
 //This verifies the CRC of the given buffer in pData .
@@ -856,7 +856,7 @@ uint8_t bootloader_verify_crc (uint8_t *pData, uint32_t len, uint32_t crc_host)
 	return retVal;
 }
 
-/* This function writes data in to BOOTLOADER_CMD_UART */
+/* This function writes data in to BOOTLOADER_LOG_UART */
 void bootloader_uart_write_data(uint8_t *pBuffer,uint32_t len)
 {
     /*you can replace the below ST's USART driver API call with your MCUs driver API call */
@@ -875,7 +875,7 @@ uint8_t get_bootloader_version(void)
 uint16_t get_mcu_chip_id(void)
 {
 /*
-	The STM32F446xx MCUs integrate an MCU ID code. This ID identifies the ST MCU partnumber
+	The STM32L476xx MCUs integrate an MCU ID code. This ID identifies the ST MCU partnumber
 	and the die revision. It is part of the DBG_MCU component and is mapped on the
 	external PPB bus (see Section 33.16 on page 1304). This code is accessible using the
 	JTAG debug pCat.2ort (4 to 5 pins) or the SW debug port (two pins) or by the user software.
@@ -888,7 +888,7 @@ uint16_t get_mcu_chip_id(void)
 
 
 /*This function reads the RDP ( Read protection option byte) value
- *For more info refer "Table 9. Description of the option bytes" in stm32f446xx RM
+ *For more info refer "Table 9. Description of the option bytes" in stm32l476xx
  */
 uint8_t get_flash_rdp_level(void)
 {
@@ -951,7 +951,7 @@ uint8_t configure_flash_sector_rw_protection(uint8_t sector_details, uint8_t pro
     //First configure the protection mode
     //protection_mode =1 , means write protect of the user flash sectors
     //protection_mode =2, means read/write protect of the user flash sectors
-    //According to RM of stm32f446xx TABLE 9, We have to modify the address 0x1FFF C008 bit 15(SPRMOD)
+    //According to RM of stm32l476xx TABLE 9, We have to modify the address 0x1FFF C008 bit 15(SPRMOD)
 
 	 //Flash option control register (OPTCR)
     volatile uint32_t *pOPTCR = (uint32_t*) 0x40023C14;
